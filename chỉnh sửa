@@ -1,0 +1,14 @@
+def classify_by_shape(features, stats):
+    # ... (đoạn code cũ giữ nguyên đến dòng check norm_area) ...
+
+    if "norm_area" in stats:
+        mean_norm = stats["norm_area"]["mean"]
+        std_norm = stats["norm_area"]["std"]
+        effective_std_norm = max(std_norm, 0.005)  # Dung sai tối thiểu cho diện tích tỷ lệ
+        z = abs(features["norm_area"] - mean_norm) / effective_std_norm
+        
+        # Chỉ báo NG nếu Z-score vượt quá ngưỡng (thay vì dùng ngưỡng cứng 0.88)
+        if z > Z_SCORE_THRESHOLD:
+            reasons.append(f"norm_area lệch {z:.1f} lần độ lệch chuẩn")
+
+    # ... (Phần check centroid_shift và các đặc trưng khác giữ nguyên) ...
