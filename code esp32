@@ -1,0 +1,73 @@
+// ============================================================
+// CẤU HÌNH CHÂN
+// ============================================================
+#define SENSOR_PIN 34   // Cảm biến: khi có vật -> xuống LOW (bình thường HIGH)
+#define OK_PIN     25   // Output cho sản phẩm OK (HIGH 0.5s)
+#define NG_PIN     26   // Output cho sản phẩm NG (HIGH 0.5s)
+#define PULSE_MS   500  // Thời gian giữ HIGH (0.5 giây)
+
+// ============================================================
+// BIẾN TOÀN CỤC
+// ============================================================
+bool lastSensorState = HIGH; // Trạng thái trước đó của cảm biến (giả sử ban đầu HIGH)
+
+void setup() {
+  // Khởi động Serial để giao tiếp với Raspberry Pi
+  Serial.begin(115200);
+  
+  // Cấu hình chân cảm biến: INPUT_PULLUP để mặc định HIGH khi không có vật
+  pinMode(SENSOR_PIN, INPUT_PULLUP);
+  
+  // Cấu hình chân output
+  pinMode(OK_PIN, OUTPUT);
+  pinMode(NG_PIN, OUTPUT);
+  digitalWrite(OK_PIN, LOW);
+  digitalWrite(NG_PIN, LOW);
+  
+  Serial.println("ESP32 READY");
+}
+
+void loop() {
+  // 1. Đọc trạng thái hiện tại của cảm biến
+  bool currentSensorState = digitalRead(SENSOR_PIN);
+
+  // 2. Phát hiện cạnh xuống (HIGH -> LOW) => Có vật đi qua
+  if (currentSensorState == LOW && lastSensorState == HIGH) {
+    // Gửi tín hiệu trigger cho Raspberry Pi
+    Serial.println("TRIG");
+    
+    // 3. Chờ lệnh từ Raspberry Pi (OK hoặc NG)
+    while (true) {
+      if (Serial.available() > 0) {
+        String command = Serial.readStringUntil('\n');
+        command.trim(); // Xóa ký tự xuống dòng
+
+        if (command == "OK") {
+          // Xuất tín hiệu OK trong 0.5 giây
+          digitalWrite(OK_PIN, HIGH);
+          delay(PULSE_MS);
+          digitalWrite(OK_PIN, LOW);
+        } 
+        else if (command == "NG") {
+          // Xuất tín hiệu NG trong 0.5 giây
+          digitalWrite(NG_PIN, HIGH);
+          delay(PULSE_MS);
+          digitalWrite(NG_PIN, LOW);
+        }
+        
+        // Thoát vòng lặp chờ sau khi đã xử lý xong
+        break;
+      }
+      delay(10);
+    }
+    
+    // 4. Chờ cảm biến trở về HIGH (vật đã rời khỏi) để sẵn sàng cho lần trigger kế tiếp
+    //    Tránh việc gửi "TRIG" liên tục khi vật vẫn còn che cảm biến
+    while (digitalRead(SENSOR_PIN) == LOW) {
+      delay(10);
+    }
+  }
+
+  // Cập nhật trạng thái trước đó cho vòng lặp kế tiếp
+  lastSensorState = currentSensorState;
+}
