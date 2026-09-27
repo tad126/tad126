@@ -1,0 +1,17 @@
+description: Ultralytics best model trained on /content/drive/MyDrive/check loi tip/data.yaml
+author: Ultralytics
+date: '2026-09-27T22:21:37.284247'
+version: 8.3.58
+license: AGPL-3.0 License (https://ultralytics.com/license)
+docs: https://docs.ultralytics.com
+stride: 32
+task: detect
+batch: 1
+imgsz:
+- 640
+- 640
+names:
+  0: PRD
+args:
+  batch: 1
+  half: false
